@@ -1,0 +1,8 @@
+venv-autokeras/
+venv-autogluon/
+venv-ludwig/
+venv-ktrain/
+venv-fastai/
+__pycache__/
+tests/models/
+tests/resources/*
