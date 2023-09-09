@@ -7,8 +7,7 @@ from sklearn.metrics import classification_report, accuracy_score, precision_sco
 
 from fastai.callback.tracker import CSVLogger
 from src.utils.handle_hist import load_dataset
-from src.utils.handle_fastai_lrs import find_lr_range
-
+from src.utils.create_resources_folder import resources
 
 def main(path_metadata: str,
         path_dataset: str,
@@ -22,45 +21,45 @@ def main(path_metadata: str,
     :return:
     """
 
+    resources()
+
     print('Time --> Start')
     start_time = time.time()
 
+    print('Loading Data')
     dataset = load_dataset(path_metadata, path_dataset)
     n_data = dataset.n_data
-    train, test, valid = dataset.to_path(test_seed=random.randint(1, 10000), val_seed=random.randint(1, 10000))
-    #train, test, valid = dataset.to_path()
+    train, test, valid = dataset.to_path()
 
-    histories = {}
-    scores = {}
-    predictions_and_more = {}
-
-    print('Preparing Data')
+    # Converting data to a format compatible to Ktrain
     train['is_valid'] = False
     valid['is_valid'] = True
     train_valid = [train, valid]
     df = pd.concat(train_valid)
 
+    print('Creating Dataloaders')
     dls = ImageDataLoaders.from_df(
             df,
             path='',
             label_col='binary_label',
-            valid_col='is_valid', 
-            num_workers=0, 
+            valid_col='is_valid',
+            num_workers=5,
             bs=12,
-            item_tfms=Resize(460),
+            #item_tfms=Resize(460),
             batch_tfms=aug_transforms()
             )
 
     print('Importing Pre-Trained Model')
-    # Model Examples: densenet201, inceptionV3, vgg16
+    # Model Examples: densenet201, inceptionV3,
     learn = vision_learner(
             dls, 
             resnet50, 
             metrics=[error_rate, accuracy, F1Score(average='binary')],
             ps=0, 
-            wd=0)
+            wd=0
+            )
 
-    # Add CSVLogger to log training metrics to a CSV file
+    # Add CSVLogger to log to save the history in a csv file
     csv_logger = CSVLogger(fname='resources/fastai_ghost.csv')
     learn.add_cb(csv_logger)
      
@@ -78,30 +77,42 @@ def main(path_metadata: str,
     learn.unfreeze()
 
     print('Fitting Model')
+    # Find once again the appropriate lr
     lr_min_2, lr_steep_2, lr_slide_2, lr_valley_2 = learn.lr_find(suggest_funcs=(minimum, steep, slide, valley))
     print('while unfrozen, lr_min', lr_min_2)
 
-    learn.fit_one_cycle(10, lr_min_2) #10
+    learn.fit_one_cycle(2, lr_min_2) #10
 
-    print('Saving Model')
-    learn.save('vgg16')
+    # Model is not save automatically
+    # learn.save('path/to/model')
 
-    print('Saving Learning Curves')
+    histories = {}
     csv_path = 'resources/fastai_ghost.csv'
     df = pd.read_csv(csv_path)
 
     for column in df.columns:
         histories[column] = [df[column].tolist()]
 
-    print('Evaluating Model')
+    # Fastai does not provide learn.evaluate()
+
+    print('Predictions')
     tst_dl = dls.test_dl(test)
     probs,target,idxs = learn.get_preds(dl=tst_dl, with_decoded=True)
 
+    # Predicted labels
     y_pred = idxs.tolist()
-    y_prob = [prob[1] for prob in probs.tolist()]
-    y_prob = np.array(y_prob)
+
+    # Probabilities of the predicted labels
+    y_prob = np.array([prob[1] for prob in probs.tolist()])
+
+    # Actual labels
     y_true = test['binary_label'].tolist()
-    
+
+    predictions_and_more = {}
+    predictions_and_more['y_pred']=[y_pred]
+    predictions_and_more['y_prob']=[y_prob]
+    predictions_and_more['y_true']=[y_true]
+
     # Accuracy, Precision, Recall, F1-Score, AUC, MCC
     acc = accuracy_score(y_true, y_pred)
     prec = precision_score(y_true, y_pred)
@@ -110,27 +121,20 @@ def main(path_metadata: str,
     auc = roc_auc_score(y_true, y_prob)
     mcc = matthews_corrcoef(y_true, y_pred)
 
+    scores={}
     results=[acc, prec, rec, f1, auc, mcc]
     metric_names=['accuracy', 'precision', 'recall', 'f1', 'auc', 'mcc']
     for i in range(len(results)):
         rounded_values = round(results[i], 4)
         scores[metric_names[i]] = rounded_values
 
-    print('Scores', scores)
-
-    print('Predictions')
-    predictions_and_more['y_pred']=[y_pred]
-    predictions_and_more['y_prob']=[y_prob]
-    predictions_and_more['y_true']=[y_true]
-
     print('Time --> Stop')
     elapsed_time = time.time() - start_time
     scores['time']=elapsed_time
-    print('TIME', elapsed_time)
+    print('Time:', elapsed_time)
 
-    print('Saving Results')
-    
-    df_1 = pd.DataFrame(histories) # maybe problem will arise here
+    print('Saving Results...')
+    df_1 = pd.DataFrame(histories)
     df_2 = pd.DataFrame(scores, index=[0])
     df_3 = pd.DataFrame(predictions_and_more)
     all_results = pd.concat([df_1, df_2, df_3], axis=1)

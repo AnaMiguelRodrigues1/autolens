@@ -4,12 +4,6 @@ from ludwig.modules.metric_modules import LudwigMetric, MulticlassAccuracy
 import torch
 from torchmetrics.classification import MulticlassF1Score
 
-# Only available for ludwig==0.8 dev
-    # Procedures:
-        # 1. git clone https://github.com/ludwig-ai/ludwig
-        # 2. pip install -e ludwig/
-        # 3. do not delete the ludwig folder
-
 # This Class can be used to register other metrics
 print('Registering the F1_Score Metric')
 @register_metric("F1 Score", [CATEGORY, CATEGORY_DISTRIBUTION], MAXIMIZE, PREDICTIONS)
