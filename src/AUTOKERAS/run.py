@@ -7,7 +7,7 @@ import random
 
 from autokeras import ImageClassifier
 
-from src.utils.handle_hist import load_dataset
+from src.utils import handle_dataset
 from src.utils.create_resources_folder import resources
 from src.utils.handle_autokeras_folder import replace_classifier_folder
 from src.utils.handle_results import save_results
@@ -25,6 +25,7 @@ def main(
     :return:
     """
 
+    # To make sure resources folder is created
     resources()
 
     print('Time --> Start')
@@ -34,9 +35,9 @@ def main(
     replace_classifier_folder()
 
     print('Loading Data')
-    dataset = load_dataset(path_metadata, path_dataset)
+    dataset = handle_dataset.check(path_dataset)
     n_data = dataset.n_data
-    data = dataset.to_pixel(target_size=target_size)
+    data = dataset.to_pixel(test_seed=random.randint(1, 10000), val_seed=random.randint(1, 10000))
 
     print('Building Architecture')
     model = ImageClassifier(
@@ -44,7 +45,7 @@ def main(
         directory='resources/autokeras',
         metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), tf.keras.metrics.AUC()],
         # F1-Score not available in this keras version
-        max_trials=3,
+        max_trials=1,
         objective=Objective("val_auc", direction="max")
         )
 
@@ -59,7 +60,7 @@ def main(
             data[0][0],
             data[1][0],
             validation_data=(data[0][2], data[1][2]),
-            epochs=25
+            epochs=1
             ) 
             
         histories.append(history)
@@ -81,8 +82,8 @@ def main(
             history = model.fit(
                 data[0][0],
                 data[1][0],
-                validation_data=(data[0][2], data[1][2],
-                epochs=25
+                validation_data=(data[0][2], data[1][2]),
+                epochs=1
                 )
             
             histories.append(history)
@@ -94,8 +95,8 @@ def main(
             batch += batch_size
 
     # Model is not saved automatically
-    # best_model = model.export_model()
-    # best_model.save("resources/autokeras/autokeras_model.keras")
+    best_model = model.export_model()
+    best_model.save("resources/autokeras/autokeras_model.keras")
             
     print('Predictions')
     # Predicted labels

@@ -4,7 +4,7 @@ import random
 from ludwig.api import LudwigModel
 import logging
 
-from src.utils.handle_hist import load_dataset
+from src.utils import handle_dataset
 from src.utils.create_resources_folder import resources
 from src.utils.handle_results import save_results
 from src.utils.handle_ludwig_folder import handle_directories_from_folder, add_directories_to_folder
@@ -36,7 +36,7 @@ def main(
     F1Score(num_classes=2) 
 
     print('Loading Data')
-    dataset = load_dataset(path_metadata, path_dataset)
+    dataset = handle_dataset.check(path_dataset)
     n_data = dataset.n_data
     train, test, valid = dataset.to_path()
     

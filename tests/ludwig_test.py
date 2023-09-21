@@ -3,8 +3,10 @@ sys.path.insert(0, "../")
 
 from src.LUDWIG.run import main
 
-main(
-        "./resources/metadata_histology_binary.csv",
-        "../../BreaKHis_v1/",
-        1        
-    )
+for i in range(10):
+    print(f'................... Trial {i} ..................')
+    main(
+        "resources/metadata_pneumonia_binary.csv",
+        "../../chest_xray/",
+        1
+        )

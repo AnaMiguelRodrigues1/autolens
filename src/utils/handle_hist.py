@@ -5,13 +5,12 @@ import pandas as pd
 
 from src.dataset.build import Dataset
 
-def create_dataset(path_metadata: str, path_dataset, fold: int, binary=True) -> Dataset:
+def create_dataset(path_metadata: str, path_dataset: str, fold: int, binary=True) -> Dataset:
     """
-
     :param path_metadata: path to dataset original metadata, not the constructed for train.
     :param path_dataset:
-    :param fold:
-    :param binary:
+    :param fold: metadata with folds to choose from
+    :param binary: binary classification
     :return:
     """
 
@@ -31,6 +30,9 @@ def create_dataset(path_metadata: str, path_dataset, fold: int, binary=True) -> 
         os.mkdir("./resources")
     except FileExistsError:
         print("Resources already created")
+
+    # Correction of path
+    df['filename'] = '../../BreaKHis_v1/' + df['filename']
 
     # this path is now the dataset metadata for training
     df.to_csv(f"./resources/metadata_histology_{tag}.csv")
@@ -63,5 +65,5 @@ def data(path_metadata: str, fold: int) -> pd.DataFrame:
     df.drop("mag", axis="columns", inplace=True)
 
     print("Total number of images:", df.shape[0])
-
+ 
     return df

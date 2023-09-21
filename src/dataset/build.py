@@ -18,8 +18,6 @@ class Dataset:
 
     def to_path(self, test_seed=1, val_seed=1) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         df = pd.read_csv(self.metadata)
-        # Correction of the filename column
-        df['filename'] = '../../BreaKHis_v1/' + df['filename']
 
         train: pd.DataFrame
         valid: pd.DataFrame
@@ -80,7 +78,7 @@ class Dataset:
         data = self.to_path(test_seed=test_seed, val_seed=val_seed)
         print('Recreating the structure of the dataset ...')
         parent_dir = '../tests/resources/'
-        directory = 'new_breakhis'
+        directory = 'new_dataset'
         new_path = os.path.join(parent_dir, directory)
 
         try:
@@ -96,7 +94,7 @@ class Dataset:
         for df in data:  # train, test, valid
             folder_name = df_list.pop()
             os.mkdir(os.path.join(new_path, folder_name))
-            for i in df['binary_label'].unique():
+            for i in df.iloc[:, -1].unique():
                 os.mkdir(os.path.join(new_path, folder_name, str(i)))
 
         # Move images to new directory
@@ -104,7 +102,7 @@ class Dataset:
             folder_name_2 = df_list_2.pop()
             for index, row in df.iterrows():
                 src = row['filename']
-                dst = os.path.join(new_path, folder_name_2, str(row['binary_label']), os.path.basename(src))
+                dst = os.path.join(new_path, folder_name_2, str(row.iloc[-1]), os.path.basename(src))
                 shutil.copyfile(src, dst)
         
         return new_path

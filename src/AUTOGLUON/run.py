@@ -3,7 +3,7 @@ import random
 
 from autogluon.multimodal import MultiModalPredictor
 
-from src.utils.handle_hist import load_dataset
+from src.utils import handle_dataset
 from src.utils.create_resources_folder import resources
 from src.utils.handle_autogluon_folder import replace_classifier_folder
 from src.utils.handle_results import save_results
@@ -11,6 +11,7 @@ from src.utils.handle_results import save_results
 def main(path_metadata: str,
         path_dataset: str,
         steps: int):
+
     """
     :param path_metadata:
     :param path_dataset:
@@ -18,6 +19,7 @@ def main(path_metadata: str,
     :param target_size:
     :return:
     """
+    
     resources()
 
     print('Time --> Start')
@@ -27,7 +29,7 @@ def main(path_metadata: str,
     replace_classifier_folder()
 
     print('Loading Data')
-    dataset = load_dataset(path_metadata, path_dataset)
+    dataset = handle_dataset.check(path_dataset) 
     n_data = dataset.n_data
     train, test, valid = dataset.to_path()
 
@@ -82,7 +84,7 @@ def main(path_metadata: str,
 
     print('Time --> Stop')
     elapsed_time = time.time() - start_time
-    print('Time:', elapse_time)
+    print('Time:', elapsed_time)
 
     print('Saving Results...')
     all_results = save_results(histories, scores, y_pred, y_prob, y_test, elapsed_time)

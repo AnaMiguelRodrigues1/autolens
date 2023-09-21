@@ -6,7 +6,7 @@ from fastai.test_utils import *
 from sklearn.metrics import classification_report, accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef
 
 from fastai.callback.tracker import CSVLogger
-from src.utils.handle_hist import load_dataset
+from src.utils import handle_dataset
 from src.utils.create_resources_folder import resources
 
 def main(path_metadata: str,
@@ -27,7 +27,7 @@ def main(path_metadata: str,
     start_time = time.time()
 
     print('Loading Data')
-    dataset = load_dataset(path_metadata, path_dataset)
+    dataset = handle_dataset.check(path_dataset)
     n_data = dataset.n_data
     train, test, valid = dataset.to_path()
 
@@ -41,19 +41,19 @@ def main(path_metadata: str,
     dls = ImageDataLoaders.from_df(
             df,
             path='',
-            label_col='binary_label',
+            label_col='multiclass_label', #binary_label
             valid_col='is_valid',
-            num_workers=5,
-            bs=12,
-            #item_tfms=Resize(460),
+            num_workers=3, #5
+            bs=16, #8
+            item_tfms=Resize(460), ## SEE THIS THING
             batch_tfms=aug_transforms()
             )
 
     print('Importing Pre-Trained Model')
-    # Model Examples: densenet201, inceptionV3,
+    # Model Examples: densenet201, inceptionV3, resnet50
     learn = vision_learner(
             dls, 
-            resnet50, 
+            vgg16, 
             metrics=[error_rate, accuracy, F1Score(average='binary')],
             ps=0, 
             wd=0
@@ -81,7 +81,7 @@ def main(path_metadata: str,
     lr_min_2, lr_steep_2, lr_slide_2, lr_valley_2 = learn.lr_find(suggest_funcs=(minimum, steep, slide, valley))
     print('while unfrozen, lr_min', lr_min_2)
 
-    learn.fit_one_cycle(2, lr_min_2) #10
+    learn.fit_one_cycle(15, lr_min_2) #10 epochs for the other two
 
     # Model is not save automatically
     # learn.save('path/to/model')
@@ -118,7 +118,7 @@ def main(path_metadata: str,
     prec = precision_score(y_true, y_pred)
     rec = recall_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
-    auc = roc_auc_score(y_true, y_prob)
+    auc = roc_auc_score(y_true, y_pred)
     mcc = matthews_corrcoef(y_true, y_pred)
 
     scores={}

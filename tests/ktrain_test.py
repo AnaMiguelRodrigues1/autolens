@@ -3,9 +3,10 @@ sys.path.insert(0, "../")
 
 from src.KTRAIN.run import main
 
-main(
-    "./resources/metadata_histology_binary.csv",
-    "../../BreaKHis_v1/",
-    1
-    )
-
+for i in range(10):
+    print(f'................... Trial {i} ..................')
+    main(
+        "resources/metadata_braintumor_multiclass.csv",
+        "../../brain_mri/",
+        1
+        )
