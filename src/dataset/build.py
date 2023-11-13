@@ -7,25 +7,32 @@ import shutil
 from sklearn.model_selection import train_test_split
 
 class Dataset:
-    def __init__(self, path_metadata: str, path_dataset: str, n_data: int) -> None:
+    def __init__(self, path_metadata: str, path_dataset: str, n_data: int, test_size: float, valid_size: float) -> None:
         """
         :param path_metadata: path to csv with image paths and respective classes
         :param path_dataset: path leading to dataset entrance to connect with metadata (path)
+        :param test_size: testing dataset size in data split
+        :param valid_size: validation dataset in data split
         """
         self.metadata = path_metadata
         self.path_dataset = path_dataset
         self.n_data = n_data
+        self.test_size = test_size
+        self.valid_size = valid_size
 
-    def to_path(self, test_seed=1, val_seed=1) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def to_path(self, test_seed=1, val_seed=1, test_size=0.2, valid_size=0.1) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        print("Splitting dataset into train/valid/test.")
         df = pd.read_csv(self.metadata)
 
         train: pd.DataFrame
         valid: pd.DataFrame
         test: pd.DataFrame
 
-        train_and_valid, test = train_test_split(df, test_size=0.2, random_state=test_seed)
+        train_and_valid, test = train_test_split(df, test_size=test_size, random_state=test_seed)
+        train, valid = train_test_split(train_and_valid, test_size=valid_size, random_state=val_seed)
 
-        train, valid = train_test_split(train_and_valid, test_size=0.25, random_state=val_seed)
+        print('here-test', test_size)
+        print('here-valid', valid_size)
 
         del train["Unnamed: 0"]
         del test["Unnamed: 0"]
@@ -34,9 +41,9 @@ class Dataset:
         return train, test, valid
 
 
-    def to_pixel(self, test_seed=1, val_seed=1, batch=(0, None), target_size=(255, 255)) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    def to_pixel(self, test_seed=1, val_seed=1, test_size=0.2, valid_size=0.1, batch=(0, None), target_size=(256, 256)) -> tuple[list[np.ndarray], list[np.ndarray]]:
         print("Converting path dataset to images.")
-        data = self.to_path(test_seed=test_seed, val_seed=val_seed)
+        data = self.to_path(test_seed=test_seed, val_seed=val_seed, test_size=test_size, valid_size=valid_size)
 
         data_x: list[np.ndarray] = []
         data_y: list[np.ndarray] = []
@@ -60,7 +67,7 @@ class Dataset:
                 matrix = cv2.imread(x_m["filename"].iloc[i])
                 # 3 channels
                 for c in range(channels):
-                    x_p[i-init, :, :, c] = cv2.resize(matrix[:, :, c], target_size) #interpolation=cv2.INTER_NEAREST)
+                    x_p[i-init, :, :, c] = cv2.resize(matrix[:, :, c], target_size)
 
                 y[i-init] = x_m[list(x_m.columns)[-1]].iloc[i]
 
@@ -74,8 +81,9 @@ class Dataset:
         # data[i][j] for train, test and validation
         return data_x, data_y
 
-    def to_folders(self, test_seed=1, val_seed=1) -> None:
-        data = self.to_path(test_seed=test_seed, val_seed=val_seed)
+    def to_folders(self, test_seed=1, val_seed=1, test_size=0.2, valid_size=0.1) -> None:
+        data = self.to_path(test_seed=test_seed, val_seed=val_seed, test_size=test_size, valid_size=valid_size)
+
         print('Recreating the structure of the dataset ...')
         parent_dir = '../tests/resources/'
         directory = 'new_dataset'

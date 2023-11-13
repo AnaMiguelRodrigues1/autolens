@@ -3,11 +3,11 @@ import random
 import glob
 import pandas as pd
 import os
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef, cohen_kappa_score
 
 import ktrain
 from ktrain import vision as vis
-from tensorflow.keras.callbacks import CSVLogger
+from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, EarlyStopping
 
 from src.utils import handle_dataset
 from src.utils.create_resources_folder import resources
@@ -18,13 +18,18 @@ def main(
         path_metadata: str,
         path_dataset: str,
         steps: int,
-        target_size=(255, 255)):
+        target_size: tuple,
+        test_size: float,
+        valid_size: float
+        ):
         
         """
         :param path_metadata:
         :param path_dataset:
         :param steps:
         :param target_size:
+        :param test_size:
+        :param valid_size:
         :return:
         """
        
@@ -40,18 +45,18 @@ def main(
 
         (trn, val, preproc) = vis.images_from_folder(
             datadir=new_path,
-            data_aug=vis.get_data_aug(horizontal_flip=True),
-            train_test_names=['train', 'valid'],
-            #target_size=(224,224),
+            data_aug=vis.get_data_aug(horizontal_flip=True, vertical_flip=True),
+            train_test_names=['train', 'test'],
+            target_size=(256,256),
             color_mode='rgb'
             )
 
         print('Loading Pre-Trained Model')
         model = vis.image_classifier(
-                'pretrained_resnet50', # pretrained_resnet50 / pretrained_mobilenet
+                'pretrained_inception', # pretrained_resnet50 / pretrained_mobilenet
                 trn,
                 val,
-                freeze_layers=15)
+                freeze_layers=50)
 
         print('Fitting Model')
         learner = ktrain.get_learner(
@@ -60,21 +65,21 @@ def main(
                 val_data=val,
                 workers=5,
                 use_multiprocessing=False,
-                batch_size=2
+                batch_size=36
                 )
 
         # Find appropriate lr
         learner.lr_find(max_epochs=5, verbose=1) #5
         learner.lr_plot(suggest=True)
+        lr_recommended = learner.lr_estimate()[2]
 
         # Add CSVLogger to log to save the history in a csv file
         csv_file = CSVLogger('resources/ktrain_ghost.csv')
-        
-        print('Fitting Model')
-        learner.autofit(5e-5, 35, callbacks=[csv_file])
-        # 5e-5 - mobilenet
-        #learner.fit_onecycle(5e-5, 2, callbacks=[csv_file])
 
+        print('Fitting Model')
+        early_stopping = EarlyStopping(monitor='loss', patience=5, restore_best_weights=False)
+        learner.autofit(lr_recommended, 35, callbacks=[csv_file, early_stopping])
+        
         csv_path = 'resources/ktrain_ghost.csv'
         df = pd.read_csv(csv_path)
 
@@ -96,17 +101,21 @@ def main(
         for subfolder in os.listdir(directory_path): # within the classes
             class_label = int(subfolder)
             folder_path = os.path.join(directory_path, subfolder)
+            files = glob.glob(os.path.join(folder_path, '*'))
 
-            for image_path in glob.glob(os.path.join(folder_path, '*.png')):
-                # Predicted label
-                prediction = predictor.predict_filename(image_path)
-                predicted_class = int(prediction[0])
-                y_pred.append(predicted_class)
+            for image_path in files:
+                if image_path.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp')):
+                    # Predicted label
+                    prediction = predictor.predict_filename(image_path)
+                    predicted_class = int(prediction[0])
+                    y_pred.append(predicted_class)
 
-                # Not able to retrieve the probability of the predicted label
+                    # Not able to retrieve the probability of the predicted label
 
-                # Actual label
-                y_true.append(class_label)
+                    # Actual label
+                    y_true.append(class_label)
+                else: 
+                    print("Non-image file:", file_path)
 
         predictions_and_more={}
         predictions_and_more['y_true']=[y_true]
@@ -115,10 +124,15 @@ def main(
         # Accuracy, Precision, Recall, F1-Score, MCC
         acc = accuracy_score(y_true, y_pred)
         print('acc', acc)
-        prec = precision_score(y_true, y_pred)
-        rec = recall_score(y_true, y_pred)
-        f1 = f1_score(y_true, y_pred)
+        prec = precision_score(y_true, y_pred, average='macro')
+        rec = recall_score(y_true, y_pred, average='macro')
+        f1 = f1_score(y_true, y_pred, average='macro')
         mcc = matthews_corrcoef(y_true, y_pred)
+        print('mcc', mcc)
+        kappa = cohen_kappa_score(y_true, y_pred)
+        print('kappa', kappa)
+
+        print('i got to here')
 
         scores={}
         results=[acc, prec, rec, f1, mcc]

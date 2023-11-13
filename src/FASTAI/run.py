@@ -1,5 +1,6 @@
 import time
 import os
+import random
 
 from fastai.vision.all import *
 from fastai.test_utils import *
@@ -12,11 +13,17 @@ from src.utils.create_resources_folder import resources
 def main(path_metadata: str,
         path_dataset: str,
         steps: int,
-        target_size=(255, 255)):
+        target_size: tuple,
+        test_size: float, 
+        valid_size: float
+        ):
+
     """
     :param path_metadata:
     :param path_dataset:
     :param steps:
+    :param test_size:
+    :param valid_size:
     :param target_size:
     :return:
     """
@@ -29,7 +36,10 @@ def main(path_metadata: str,
     print('Loading Data')
     dataset = handle_dataset.check(path_dataset)
     n_data = dataset.n_data
-    train, test, valid = dataset.to_path()
+    train, test, valid = dataset.to_path(test_seed=random.randint(1, 10000), 
+                                        val_seed=random.randint(1, 10000),
+                                        test_size=test_size,
+                                        valid_size=valid_size)
 
     # Converting data to a format compatible to Ktrain
     train['is_valid'] = False
@@ -41,11 +51,11 @@ def main(path_metadata: str,
     dls = ImageDataLoaders.from_df(
             df,
             path='',
-            label_col='multiclass_label', #binary_label
+            label_col='binary_label', # multiclass_label (according to column in metadata)
             valid_col='is_valid',
-            num_workers=3, #5
-            bs=16, #8
-            item_tfms=Resize(460), ## SEE THIS THING
+            num_workers=5, #5
+            bs=16, # batch size
+            item_tfms=Resize(256),
             batch_tfms=aug_transforms()
             )
 
@@ -53,8 +63,8 @@ def main(path_metadata: str,
     # Model Examples: densenet201, inceptionV3, resnet50
     learn = vision_learner(
             dls, 
-            vgg16, 
-            metrics=[error_rate, accuracy, F1Score(average='binary')],
+            resnet34,  
+            metrics=[error_rate, accuracy, F1Score(average='weighted')], # average='macro'
             ps=0, 
             wd=0
             )
@@ -67,19 +77,20 @@ def main(path_metadata: str,
     learn.recorder.train_metrics = True
 
     print('... layers still frozen')
+
     # Find appropriate lr
     lr_min_1, lr_steep_1, lr_slide_1, lr_valley_1 = learn.lr_find(suggest_funcs=(minimum, steep, slide, valley))
-    print('while frozen, lr_valley:', lr_valley_1)
+    print('lr_valley:', lr_valley_1)
 
-    learn.fit_one_cycle(1, lr_valley_1) #1
+    learn.fit_one_cycle(20, lr_valley_1) #20
     
     print('... unfreezing the layers')
     learn.unfreeze()
 
     print('Fitting Model')
-    # Find once again the appropriate lr
+    Find once again the appropriate lr
     lr_min_2, lr_steep_2, lr_slide_2, lr_valley_2 = learn.lr_find(suggest_funcs=(minimum, steep, slide, valley))
-    print('while unfrozen, lr_min', lr_min_2)
+    print('lr_min', lr_min_2)
 
     learn.fit_one_cycle(15, lr_min_2) #10 epochs for the other two
 
@@ -103,10 +114,11 @@ def main(path_metadata: str,
     y_pred = idxs.tolist()
 
     # Probabilities of the predicted labels
+    #y_prob = [prob for prob in probs.tolist()]
     y_prob = np.array([prob[1] for prob in probs.tolist()])
 
     # Actual labels
-    y_true = test['binary_label'].tolist()
+    y_true = test['multiclass_label'].tolist()
 
     predictions_and_more = {}
     predictions_and_more['y_pred']=[y_pred]
@@ -118,12 +130,12 @@ def main(path_metadata: str,
     prec = precision_score(y_true, y_pred)
     rec = recall_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
-    auc = roc_auc_score(y_true, y_pred)
+    auc = roc_auc_score(y_true, y_prob)
     mcc = matthews_corrcoef(y_true, y_pred)
 
     scores={}
-    results=[acc, prec, rec, f1, auc, mcc]
-    metric_names=['accuracy', 'precision', 'recall', 'f1', 'auc', 'mcc']
+    results=[acc, prec, rec, f1, mcc, auc]
+    metric_names=['accuracy', 'precision', 'recall', 'f1', 'mcc', 'auc']
     for i in range(len(results)):
         rounded_values = round(results[i], 4)
         scores[metric_names[i]] = rounded_values

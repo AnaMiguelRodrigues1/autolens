@@ -16,13 +16,18 @@ def main(
         path_metadata: str,
         path_dataset: str,
         steps: int,
-        target_size=(255, 255)): #modify here the target_size
+        target_size: tuple,
+        test_size: float, 
+        valid_size: float 
+        ):
+
     """
     :param path_metadata:
     :param path_dataset:
     :param steps:
     :param target_size:
-    :return:
+    :param test_size:
+    :param valid_size
     """
 
     # To make sure resources folder is created
@@ -37,16 +42,19 @@ def main(
     print('Loading Data')
     dataset = handle_dataset.check(path_dataset)
     n_data = dataset.n_data
-    data = dataset.to_pixel(test_seed=random.randint(1, 10000), val_seed=random.randint(1, 10000))
+    data = dataset.to_pixel(test_seed=random.randint(1, 10000), 
+                            val_seed=random.randint(1, 10000),
+                            test_size=test_size,
+                            valid_size=valid_size)
 
     print('Building Architecture')
     model = ImageClassifier(
         project_name='autokeras_model',
         directory='resources/autokeras',
-        metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), tf.keras.metrics.AUC()],
+        metrics = ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), tf.keras.metrics.AUC()],
         # F1-Score not available in this keras version
         max_trials=1,
-        objective=Objective("val_auc", direction="max")
+        objective=Objective('val_auc', direction="max") 
         )
 
     histories = []
@@ -59,10 +67,10 @@ def main(
         history = model.fit(
             data[0][0],
             data[1][0],
-            validation_data=(data[0][2], data[1][2]),
+            validation_data=(data[0][2], data[1][2]), # or validation_split=0.15,
             epochs=1
             ) 
-            
+
         histories.append(history)
 
         print('Evaluating Model')
@@ -82,7 +90,7 @@ def main(
             history = model.fit(
                 data[0][0],
                 data[1][0],
-                validation_data=(data[0][2], data[1][2]),
+                validation_data=(data[0][2], data[1][2]), # or validation_split=0.15,
                 epochs=1
                 )
             
@@ -110,10 +118,12 @@ def main(
     for i in range(0, len(data[0][1]), 32):
         y_prob_int = model.export_model()(data[0][1][i:i+32]) # works as tensorflow keras model
         y_prob_int = np.array(y_prob_int).flatten().tolist()
-        prob_predictions.extend(y_prob_int)
+        y_prob_int_rounded = [round(prob, 4) for prob in y_prob_int]
+        prob_predictions.extend(y_prob_int_rounded)
 
     # Actual labels
     y_test = data[1][1].tolist()
+    print('true labels', len(y_test))
 
     print('Time --> Stop')
     elapsed_time = time.time() - start_time

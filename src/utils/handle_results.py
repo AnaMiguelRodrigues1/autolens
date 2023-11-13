@@ -10,11 +10,11 @@ def save_results(histories, scores, predictions, prob_predictions, y_test, elaps
         if len(histories) == 2 and next(iter(histories))=='train': # ludwig
             learning_curves = {}
                                             
-            for key, value in histories['train']['binary_label'].items():
+            for key, value in histories['train']['multiclass_label'].items(): #binary_label
                 new_key = 'train_' + key    
                 learning_curves[new_key] = [value]
             
-            for key, value in histories['valid']['binary_label'].items():
+            for key, value in histories['valid']['multiclass_label'].items():
                 new_key = 'valid_' + key
                 learning_curves[new_key] = [value]
 
@@ -37,7 +37,7 @@ def save_results(histories, scores, predictions, prob_predictions, y_test, elaps
     if type(scores) is dict:
         if len(scores) == 2: # ludwig
             scores_new = {}
-            for key, value in scores['binary_label'].items():
+            for key, value in scores['multiclass_label'].items():
                 scores_new[key]=value
             
             scores_new['time'] = elapsed_time

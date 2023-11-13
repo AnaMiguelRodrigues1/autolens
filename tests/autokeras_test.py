@@ -3,11 +3,12 @@ sys.path.insert(0, "../")
 
 from src.AUTOKERAS.run import main
 
-for i in range(10):
-    print(f'................... Trial {i} ..................')
-    main(
-        "resources/metadata_braintumor_multiclass.csv",
-        "../../brain_mri/",
-        1
-        )   
+main(
+    "resources/metadata_brain_binary.csv",
+    "../../brain_mri/",
+    1,
+    (256,256),
+    0.227,
+    0.1
+    )
 

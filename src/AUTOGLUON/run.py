@@ -10,13 +10,19 @@ from src.utils.handle_results import save_results
 
 def main(path_metadata: str,
         path_dataset: str,
-        steps: int):
+        steps: int,
+        target_size: tuple,
+        test_size: float,
+        valid_size:float
+        ):
 
     """
     :param path_metadata:
     :param path_dataset:
     :param steps:
     :param target_size:
+    :param test_size:
+    :param valid_size:
     :return:
     """
     
@@ -31,8 +37,11 @@ def main(path_metadata: str,
     print('Loading Data')
     dataset = handle_dataset.check(path_dataset) 
     n_data = dataset.n_data
-    train, test, valid = dataset.to_path()
-
+    train, test, valid = dataset.to_path(test_seed=random.randint(1, 10000), 
+            val_seed=random.randint(1, 10000), 
+            test_size=test_size, 
+            valid_size=valid_size)
+    
     print('Building Architecture')
     classifier = MultiModalPredictor(
             label="binary_label",
@@ -49,16 +58,16 @@ def main(path_metadata: str,
             tuning_data=valid,
             column_types={
                 "filename": "image_path",
-                "binary_label": "binary"
+                "binary_label": "binary" 
                 },
             seed=random.randint(1, 10000),
-            presets='medium_quality',
+            presets='medium_quality', # medium_quality / high_quality / best_quality
             hyperparameters={
                 "env.num_workers": 0,
-                "env.num_workers_evaluation": 0, # otherwise raises ssh error 
+                "env.num_workers_evaluation": 0, # otherwise arrises an ssh error 
                 "env.num_gpus": 1
                 },
-            time_limit=600 # in seconds
+            time_limit=60*5 # in seconds
             )
 
     histories = classifier.fit_summary(verbosity=4, show_plot=True)
@@ -69,12 +78,12 @@ def main(path_metadata: str,
     print('Evaluating Model')
     scores = classifier.evaluate(
             data=test, 
-            metrics=["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc", "mcc"])
+            metrics=["accuracy", "precision", "recall", "f1", "roc_auc", "mcc"])
 
     print('Predictions')
     # Predicted labels
     y_pred = classifier.predict(test).tolist() 
-    
+
     # Probabilities of the predicted labels
     prob = classifier.predict_proba(test)
     y_prob = (prob[[0, 1]].max(axis=1)).tolist()

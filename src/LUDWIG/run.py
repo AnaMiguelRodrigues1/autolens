@@ -8,21 +8,25 @@ from src.utils import handle_dataset
 from src.utils.create_resources_folder import resources
 from src.utils.handle_results import save_results
 from src.utils.handle_ludwig_folder import handle_directories_from_folder, add_directories_to_folder
-from src.utils.handle_ludwig_metrics import F1Score
+from src.utils import handle_ludwig_metrics
 
-def main(
-        path_metadata: str,
-        path_dataset: str,
-        steps: int
-        ):
+def main(path_metadata: str,
+    path_dataset: str,
+    steps: int,
+    target_size: tuple,
+    test_size: float,
+    valid_size:float):
+
     """
     :param path_metadata:
     :param path_dataset:
     :param steps:
     :param target_size:
+    :param test_size:
+    :param valid_size:
     :return:
     """
-
+    
     resources()
 
     print('Time --> Start')
@@ -32,14 +36,14 @@ def main(
     handle_directories_from_folder()
     add_directories_to_folder()
 
-    print('Registering F1-Score')
-    F1Score(num_classes=2) 
-
     print('Loading Data')
     dataset = handle_dataset.check(path_dataset)
     n_data = dataset.n_data
-    train, test, valid = dataset.to_path()
-    
+    train, test, valid = dataset.to_path(test_seed=random.randint(1, 10000),
+                                        val_seed=random.randint(1, 10000),
+                                        test_size=test_size,
+                                        valid_size=valid_size)
+
     print('Building Architecture')
     config = {
         'input_features': [
@@ -49,17 +53,17 @@ def main(
             'preprocessing': {
             'num_processes': 4
                 },
-                'encoder': 'stacked_cnn'
+                'encoder': 'efficientnet'
             }
         ],
         'output_features': [
             {
-            'name': 'binary_label',
-            'type': 'binary'
+            'name': 'binary_label', # multiclass_label
+            'type': 'binary'  # category 
             }
         ],
         'training': {
-            'epochs':25  
+            'epochs':25 
             },
         'hyperopt': {
             'parameters': {},
@@ -70,7 +74,7 @@ def main(
             'n_startup_jobs': 10},
             'goal': 'maximize',
             'metric': 'roc_auc',
-            'output_feature': 'binary_label',
+            'output_feature': 'binary_label', # multiclass_label
             }
         }
 
@@ -88,28 +92,32 @@ def main(
             skip_save_training_statistics=False
             )
 
+    histories={'train':train_stats['training'],
+            'valid':train_stats['validation']}
+
     print('Evaluating Model')
     test_stats, predictions, output_directory = model.evaluate(test)
+    scores = test_stats['multiclass_label']
 
     print('Predictions')
     predictions_lw, output_directory = model.predict(test)
 
     # Predicted labels
-    predictions_boolean = predictions_lw["binary_label_predictions"].tolist()
-    y_pred = [1 if p else 0 for p in predictions_boolean]
+    predictions_raw = predictions_lw["multiclass_label_predictions"].tolist()
+    y_pred = [int(i) for i in predictions_raw]
 
     # Probabilities of the predicted labels
-    y_prob = predictions_lw["binary_label_probability"].tolist()
+    y_prob = predictions_lw["multiclass_label_probability"].tolist()
 
     # Actual labels
-    y_test = test['binary_label'].tolist()
+    y_test = test['multiclass_label'].tolist()
 
     print('Time --> Stop')
     elapsed_time = time.time() - start_time
     print('Time:', elapsed_time)
 
     print('Saving Results...')
-    all_results = save_results(raw_data, test_stats, y_pred, y_prob, y_test, elapsed_time)
+    all_results = save_results(histories, scores, y_pred, y_prob, y_test, elapsed_time)
     all_results.to_csv('resources/ludwig_results.csv', mode='a', index=False)
     print('Results Ready!')
 

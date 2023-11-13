@@ -9,7 +9,7 @@ def check(path_dataset):
     for key,value in datasets.items():
         if path_dataset == key:
             dataset = value(path_dataset)
-            
+        
             return dataset
 
     return None
