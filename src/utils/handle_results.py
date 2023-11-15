@@ -10,11 +10,13 @@ def save_results(histories, scores, predictions, prob_predictions, y_test, elaps
         if len(histories) == 2 and next(iter(histories))=='train': # ludwig
             learning_curves = {}
                                             
-            for key, value in histories['train']['multiclass_label'].items(): #binary_label
+
+            ## Recorda-te daqui que o binary_label depende do numero labels -> criar def
+            for key, value in histories['train']['label'].items(): #binary_label
                 new_key = 'train_' + key    
                 learning_curves[new_key] = [value]
             
-            for key, value in histories['valid']['multiclass_label'].items():
+            for key, value in histories['valid']['label'].items():
                 new_key = 'valid_' + key
                 learning_curves[new_key] = [value]
 

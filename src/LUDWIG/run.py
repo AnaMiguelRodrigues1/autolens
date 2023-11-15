@@ -4,21 +4,19 @@ import random
 from ludwig.api import LudwigModel
 import logging
 
-from src.utils import handle_dataset
+from src.dataset.build_2 import Dataset
 from src.utils.create_resources_folder import resources
 from src.utils.handle_results import save_results
 from src.utils.handle_ludwig_folder import handle_directories_from_folder, add_directories_to_folder
 from src.utils import handle_ludwig_metrics
 
-def main(path_metadata: str,
-    path_dataset: str,
-    steps: int,
-    target_size: tuple,
-    test_size: float,
-    valid_size:float):
+def main(path_dataset: str,
+    steps=1,
+    target_size=(255,255),
+    test_size=0.2,
+    valid_size=0.1):
 
     """
-    :param path_metadata:
     :param path_dataset:
     :param steps:
     :param target_size:
@@ -37,12 +35,13 @@ def main(path_metadata: str,
     add_directories_to_folder()
 
     print('Loading Data')
-    dataset = handle_dataset.check(path_dataset)
-    n_data = dataset.n_data
-    train, test, valid = dataset.to_path(test_seed=random.randint(1, 10000),
-                                        val_seed=random.randint(1, 10000),
-                                        test_size=test_size,
-                                        valid_size=valid_size)
+    dataset = Dataset(path_dataset=path_dataset, 
+                    test_size=test_size, 
+                    valid_size=valid_size)
+    train, test, valid = dataset.to_path(test_size=test_size,
+                                        valid_size=valid_size,
+                                        test_seed=random.randint(1, 10000),
+                                        valid_seed=random.randint(1, 10000))
 
     print('Building Architecture')
     config = {
@@ -53,17 +52,17 @@ def main(path_metadata: str,
             'preprocessing': {
             'num_processes': 4
                 },
-                'encoder': 'efficientnet'
+                'encoder': 'stacked_cnn'
             }
         ],
         'output_features': [
             {
-            'name': 'binary_label', # multiclass_label
+            'name': 'label', # multiclass_label
             'type': 'binary'  # category 
             }
         ],
         'training': {
-            'epochs':25 
+            'epochs':5 
             },
         'hyperopt': {
             'parameters': {},
@@ -97,24 +96,24 @@ def main(path_metadata: str,
 
     print('Evaluating Model')
     test_stats, predictions, output_directory = model.evaluate(test)
-    scores = test_stats['multiclass_label']
+    scores = test_stats['label']
 
     print('Predictions')
     predictions_lw, output_directory = model.predict(test)
 
     # Predicted labels
-    predictions_raw = predictions_lw["multiclass_label_predictions"].tolist()
+    predictions_raw = predictions_lw["label_predictions"].tolist()
     y_pred = [int(i) for i in predictions_raw]
 
     # Probabilities of the predicted labels
-    y_prob = predictions_lw["multiclass_label_probability"].tolist()
+    y_prob = predictions_lw["label_probability"].tolist()
 
     # Actual labels
-    y_test = test['multiclass_label'].tolist()
+    y_test = test['label'].tolist()
 
     print('Time --> Stop')
     elapsed_time = time.time() - start_time
-    print('Time:', elapsed_time)
+    print('Time(min):', round(elapsed_time/60,2))
 
     print('Saving Results...')
     all_results = save_results(histories, scores, y_pred, y_prob, y_test, elapsed_time)
