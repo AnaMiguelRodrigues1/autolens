@@ -10,8 +10,11 @@ def run_external_command(command):
     subprocess.check_call(command, shell=True)
 
 def maybe_prepare_requirements(mode, cache_dir):
+    
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
+        
+    cache_dir = os.path.abspath(cache_dir)
     
     venv_name = f"venv-{mode}"
     venv_path = os.path.join(cache_dir, venv_name)
@@ -25,8 +28,21 @@ def maybe_prepare_requirements(mode, cache_dir):
         
         run_external_command(f"{pip_command} install -r requirements_{mode}.txt")
         
-    return os.path.join(venv_path,"bin","python")
+    # add venv packages to the path
+    sys.path.insert(1, os.path.join(venv_path,"bin","python"))
+    #return os.path.join(venv_path,"bin","python")
+
+def autolens(autolens_mode, 
+             dataset_path, 
+             target_size,
+             test_percentage,
+             val_percentage,
+             clean_metadata,
+             cache_dir):
     
+    maybe_prepare_requirements(args.autolens_mode, args.cache_dir)
+    
+    # REST OF THE CODE TO RUN
     
 if __name__ == "__main__":
     
@@ -44,6 +60,13 @@ if __name__ == "__main__":
     # Parse the arguments
     args = parser.parse_args()
     
-    python_venv_command = maybe_prepare_requirements(args.autolens_mode, args.cache_dir)
+    autolens(args.autolens_mode, 
+             args.dataset_path,
+             args.target_size,
+             args.test_percentage,
+             args.val_percentage,
+             args.clean_metadata,
+             args.cache_dir)
     
+    print(sys.path)
     
