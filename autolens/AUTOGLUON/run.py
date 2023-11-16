@@ -3,10 +3,10 @@ import random
 
 from autogluon.multimodal import MultiModalPredictor
 
-from src.utils import handle_dataset
-from src.utils.create_resources_folder import resources
-from src.utils.handle_autogluon_folder import replace_classifier_folder
-from src.utils.handle_results import save_results
+from autolens.utils import handle_dataset
+from autolens.utils.create_resources_folder import resources
+from autolens.utils.handle_autogluon_folder import replace_classifier_folder
+from autolens.utils.handle_results import save_results
 
 def main(path_metadata: str,
         path_dataset: str,

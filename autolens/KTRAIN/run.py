@@ -9,10 +9,10 @@ import ktrain
 from ktrain import vision as vis
 from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, EarlyStopping
 
-from src.utils import handle_dataset
-from src.utils.create_resources_folder import resources
-from src.utils.handle_results import save_results
-from src.utils.handle_ktrain_folders import delete_tmp_and_checkpoint
+from autolens.utils import handle_dataset
+from autolens.utils.create_resources_folder import resources
+from autolens.utils.handle_results import save_results
+from autolens.utils.handle_ktrain_folders import delete_tmp_and_checkpoint
 
 def main(
         path_metadata: str,

@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, "../")
 
-from src.dataset.build import Dataset
+from autolens.dataset.build import Dataset
 import random
 
 dataset = Dataset(

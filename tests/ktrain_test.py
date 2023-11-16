@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, "../")
 
-from src.KTRAIN.run import main
+from autolens.KTRAIN.run import main
 
 main(
     "resources/metadata_brain_binary.csv",
