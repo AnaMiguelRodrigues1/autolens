@@ -1,4 +1,4 @@
-from src.utils import handle_hist
+from autolens.utils import handle_hist
 
 loaded_dataset = handle_hist.load_dataset(
     "./resources/metadata_histology_multiclass.csv",

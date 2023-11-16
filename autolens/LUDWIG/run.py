@@ -1,14 +1,18 @@
+#print("???")
 import time
 import random
 
 from ludwig.api import LudwigModel
+#print("here")
 import logging
 
-from src.dataset.build_2 import Dataset
-from src.utils.create_resources_folder import resources
-from src.utils.handle_results import save_results
-from src.utils.handle_ludwig_folder import handle_directories_from_folder, add_directories_to_folder
-from src.utils import handle_ludwig_metrics
+from autolens.dataset.build_2 import Dataset
+from autolens.utils.create_resources_folder import resources
+from autolens.utils.handle_results import save_results
+from autolens.utils.handle_ludwig_folder import handle_directories_from_folder, add_directories_to_folder
+from autolens.utils import handle_ludwig_metrics
+
+#print("alo")
 
 def main(path_dataset: str,
     steps=1,

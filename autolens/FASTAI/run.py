@@ -7,8 +7,8 @@ from fastai.test_utils import *
 from sklearn.metrics import classification_report, accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef
 
 from fastai.callback.tracker import CSVLogger
-from src.utils import handle_dataset
-from src.utils.create_resources_folder import resources
+from autolens.utils import handle_dataset
+from autolens.utils.create_resources_folder import resources
 
 def main(path_metadata: str,
         path_dataset: str,

@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-from src.dataset.build import Dataset
+from autolens.dataset.build import Dataset
 
 def create_dataset(path_dataset: str, target_class: str='meningioma_tumor', binary=True, test_size=0.2, valid_size=0.1) -> Dataset:
     """

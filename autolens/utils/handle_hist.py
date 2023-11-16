@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from src.dataset.build import Dataset
+from autolens.dataset.build import Dataset
 
 def create_dataset(path_metadata: str, path_dataset: str, fold: int, binary=True) -> Dataset:
     """

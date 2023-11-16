@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-from src.dataset.build import Dataset
+from autolens.dataset.build import Dataset
 
 def create_dataset(path_dataset: str) -> Dataset:
     """

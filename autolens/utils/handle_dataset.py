@@ -1,4 +1,4 @@
-from src.utils import handle_hist, handle_pneum, handle_brain
+from autolens.utils import handle_hist, handle_pneum, handle_brain
 
 datasets = {'../../BreaKHis_v1/': handle_hist.create_dataset, 
         '../../chest_xray/': handle_pneum.create_dataset,
