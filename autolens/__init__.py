@@ -1,4 +1,4 @@
-__version__="0.0.1"
+__version__="0.1.0"
 
 import argparse
 import subprocess
@@ -33,7 +33,10 @@ def maybe_prepare_requirements(mode, cache_dir):
         run_external_command(f"{pip_command} install -r requirements_{mode}.txt")
         
     # add venv packages to the path
-    sys.path.insert(1, os.path.join(venv_path,"bin","python"))
+    #print(venv_path)
+    #print(sys.executable.split("/")[-1])
+    #print(os.path.join(venv_path,"lib64",sys.executable.split("/")[-1],"site-packages"))
+    sys.path.insert(1, os.path.join(venv_path,"lib64",sys.executable.split("/")[-1],"site-packages"))
     #return os.path.join(venv_path,"bin","python")
 
 def autolens(autolens_mode, 
@@ -48,6 +51,8 @@ def autolens(autolens_mode,
     
     # run ana's super code
     package_name = autolens_mode.upper()
+    
+    print(sys.path)
     
     module = importlib.import_module(f"autolens.{package_name}.run")
     automl_main = getattr(module, "main")
