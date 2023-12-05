@@ -10,10 +10,12 @@ This project can be both used as a library and CLI tool.
 ### Dataset preparation
 - Main folder with sub-folders, each named with an integer number
   
-### Library setup
+### Library Setup
 - clone repo: `git clone https://github.com/AnaMiguelRodrigues1/autolens.git`
 - move to the root of the project
 - install the library: `python3.9 setup.py install`
+- install python virtual environment on the root folder: `python -m venv {automl_tool}_venv`
+- run `source -m {automl_tool}_venv/bin/activate`
 
 ````python
 
@@ -29,7 +31,7 @@ main(
 
 ````
 
-### CLI interaction
+### CLI Interaction
 - clone repo: `git clone https://github.com/AnaMiguelRodrigues1/autolens.git`
 - move to the root of the project
 
@@ -43,6 +45,10 @@ python3.9 autolens.py "ludwig" "../../chest_xray"
   --cache_dir "{home_dir}/.cache/autolens"
 
 ````
+
+### Configuration Details
+
+
 
 ### More Information
 - [AutoKeras: ImageClassifier](https://auto.gluon.ai/stable/tutorials/multimodal/multimodal_prediction/beginner_multimodal.html)
