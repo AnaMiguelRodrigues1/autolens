@@ -47,7 +47,7 @@ python3.9 autolens.py "ludwig" "../../chest_xray"
 ````
 
 ### Configuration Details
-
+![Technical requisites](/assets/config_details.png)
 
 
 ### More Information
