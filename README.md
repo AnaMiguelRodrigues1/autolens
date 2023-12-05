@@ -47,8 +47,20 @@ python3.9 autolens.py "ludwig" "../../chest_xray"
 ````
 
 ### Configuration Details
-![Technical requisites](/assets/config_details.png)
 
+|                  | **Fastai** | **Ktrain** |    **Ludwig**   | **Autogluon**[^2] | **Autokeras** |
+|                  | *v2.7.12*  | *v0.37.2*  |  *v0.8.1.post1* |     *v0.8.2*      |    *v1.1.0*   |
+|------------------|------------|------------|-----------------|-------------------|---------------|
+| **S.F.**         | Pytorch v1.13.1  | Tensorflow v2.11 | Tensorflow[^1] | Pytorch v1.13.1 | Tensorflow v>=2.8.0[^3] |
+| **I.S.**         | API | API | API/CLI | API | API |
+| **Lang.**        | Python v3.7-v3.10 | Python v3.6-v3.10 | Python v>=3.8 | Python v3.8-v3.10 | Python v3.8-v3.11 |
+| **O.S.**         | Linux, Windows | Linux | Linux, Windows | Linux, Windows[^4] | Linux, Windows[^5], MacOS |
+
+[^1]: Uses Tensorboard v2.14, a visualization toolkit from Tensorflow.
+[^2]: Uses **Fastai** as one of the installation requirements.
+[^3]: Tensorflow v2.9.1 most compatible with the remaining dependencies.
+[^4]: Advisable to use Anaconda.
+[^5]: Requires Microsoft Visual C++ and v>7.
 
 ### More Information
 - [AutoKeras: ImageClassifier](https://auto.gluon.ai/stable/tutorials/multimodal/multimodal_prediction/beginner_multimodal.html)
