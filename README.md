@@ -3,8 +3,6 @@
 ## Purpose
 Effortlessly implementation of pre-existing code from open-source Augmented ML and Automated ML tools that support image classification tasks
 
-## Resources
-
 ## Usage
 This project can be both used as a library and CLI tool. 
 ### Dataset preparation
