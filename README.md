@@ -52,9 +52,8 @@ python3.9 autolens.py "ludwig" "../../chest_xray"
 **Lang.** - Programming Language
 **O.S.** - Operative System
 
-|                  | **Fastai**    | **Ktrain**   | **Ludwig**       | **Autogluon**[^2] | **Autokeras** |
-|                  | **v2.7.12**   | **v0.37.2**  | **v0.8.1.post1** | **v0.8.2**        | **v1.1.0**    |
-|------------------|---------------|--------------|------------------|-------------------|---------------|
+|                  | **Fastai v2.7.12** | **Ktrain v0.37.2** | **Ludwig v0.8.1.post1** | **Autogluon[^2] v0.8.2**| **Autokeras v1.1.0** |
+|------------------|--------------------|--------------------|-------------------------|-------------------------|----------------------|
 | **S.F.**         | Pytorch v1.13.1| Tensorflow v2.11 | Tensorflow[^1] | Pytorch v1.13.1   | Tensorflow v>=2.8.0[^3] |
 | **I.S.**         | API           | API          | API/CLI          | API               | API           |
 | **Lang.**        | Python v3.7-v3.10 | Python v3.6-v3.10 | Python v>=3.8 | Python v3.8-v3.10 | Python v3.8-v3.11 |
